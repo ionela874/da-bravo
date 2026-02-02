@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Felicitări! DA, BRAVO!</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000; /* Fundal negru ca noaptea */
+            overflow: hidden; /* Fără bare de scroll */
+            font-family: 'Arial Black', sans-serif;
+            display: flex; /* Pentru centrare ușoară */
+            justify-content: center; /* Centrează orizontal */
+            align-items: center; /* Centrează vertical */
+            min-height: 100vh; /* Ocupă toată înălțimea ecranului */
+        }
+
+        #mesaj {
+            position: absolute; /* Rămâne deasupra artificiilor */
+            color: white;
+            font-size: 5vw; /* Dimensiune responsivă a textului */
+            text-shadow: 0 0 20px #ff00ea, 0 0 40px #ff00ea, 0 0 60px #ff00ea; /* Efect neon/strălucire */
+            z-index: 10; /* Textul să fie deasupra artificiilor */
+            opacity: 0; /* Începe invizibil */
+            animation: aparitie 2s forwards ease-in-out; /* Animație de apariție */
+            text-align: center; /* Centrează textul pe mai multe rânduri dacă este cazul */
+            padding: 20px; /* Un pic de spațiu în jurul textului */
+        }
+
+        @keyframes aparitie {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        canvas {
+            position: absolute; /* Permite suprapunerea peste body */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            z-index: 5; /* Sub text, dar peste fundal */
+        }
+    </style>
+</head>
+<body>
+    <h1 id="mesaj">DA, BRAVO!</h1>
+    
+    <canvas id="canvasArtificii"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvasArtificii');
+        const ctx = canvas.getContext('2d');
+
+        // Ajustează dimensiunea canvasului la dimensiunea ferestrei
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Clasa pentru fiecare particulă de artificiu
+        class Particula {
+            constructor(x, y, culoare, radius, vitezaX, vitezaY) {
+                this.x = x;
+                this.y = y;
+                this.culoare = culoare;
+                this.radius = radius;
+                this.vitezaX = vitezaX;
+                this.vitezaY = vitezaY;
+                this.viata = 1; // Durata de viață a particulei
+                this.frictiune = 0.95; // Reduce viteza
+                this.gravitatie = 0.05; // Trage particulele în jos
+            }
+
+            update() {
+                this.vitezaX *= this.frictiune;
+                this.vitezaY *= this.frictiune;
+                this.vitezaY += this.gravitatie;
+                this.x += this.vitezaX;
+                this.y += this.vitezaY;
+                this.viata -= 0.01; // Particulele dispar în timp
+            }
+
+            draw() {
+                ctx.save(); // Salvează starea curentă a contextului
+                ctx.globalAlpha = Math.max(0, this.viata); // Opacitate bazată pe viață
+                ctx.fillStyle = this.culoare;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore(); // Restaurează starea anterioară
+            }
+        }
+
+        let particule = [];
+
+        // Funcția pentru a crea o explozie de artificii
+        function creeazaExplozie(x, y) {
+            const culori = ['#ff00ea', '#00ff44', '#00ffff', '#ffff00', '#ff4400', '#ff0077', '#7700ff']; // Paletă de culori mai bogată
+            const culoare = culori[Math.floor(Math.random() * culori.length)];
+            const numParticule = Math.random() * 60 + 40; // Număr variabil de particule
+            const baseRadius = Math.random() * 2 + 1; // Rază variabilă
+
+            for (let i = 0; i < numParticule; i++) {
+                // Generăm o viteză inițială în toate direcțiile
+                const unghi = Math.random() * Math.PI * 2;
+                const vitezaInitiala = Math.random() * 8 + 2; // Viteză mai mare pentru o explozie mai amplă
+                const vitezaX = Math.cos(unghi) * vitezaInitiala;
+                const vitezaY = Math.sin(unghi) * vitezaInitiala;
+
+                particule.push(new Particula(x, y, culoare, baseRadius, vitezaX, vitezaY));
+            }
+        }
+
+        // Bucla principală de animație
+        function animate() {
+            // Curățăm canvasul cu o opacitate mică pentru efectul de "urmă"
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Actualizăm și desenăm fiecare particulă
+            for (let i = particule.length - 1; i >= 0; i--) {
+                const p = particule[i];
+                if (p.viata <= 0) {
+                    particule.splice(i, 1); // Eliminăm particulele "moarte"
+                } else {
+                    p.update();
+                    p.draw();
+                }
+            }
+
+            // Declansăm explozii aleatorii
+            if (Math.random() < 0.03) { // Frecvența exploziilor
+                creeazaExplozie(Math.random() * canvas.width, Math.random() * canvas.height * 0.8); // Artificiile apar mai sus pe ecran
+            }
+
+            requestAnimationFrame(animate); // Continuă animația
+        }
+
+        // Lansează prima explozie imediat ce pagina este încărcată
+        creeazaExplozie(canvas.width / 2, canvas.height / 2);
+        
+        // Asigură-te că artificiile apar și la redimensionarea ferestrei
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        animate(); // Pornește animația
+    </script>
+</body>
+</html>
+
+
